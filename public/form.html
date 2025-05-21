@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cifrador &amp; Análisis</title>
+    <link rel="icon" href="data:;base64,=" />
+
+    <!-- hoja de estilos separada -->
+    <link rel="stylesheet" href="form.css" />
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div class="contenedor-principal-animacion">
+      <div class="contenedor-principal">
+        <h1>Algoritmos de Cifrado/Análisis</h1>
+        <form id="cipherForm">
+          <label
+            >Texto (claro o cifrado):
+            <input type="text" name="texto" required />
+          </label>
+
+          <label
+            >Algoritmo:
+            <select name="tipo" id="tipoSelect" required>
+              <option disabled selected value="">– elige –</option>
+
+              <optgroup label="Cifra por Desplazamiento">
+                <option value="desplazamiento-clave">
+                  Desplazamiento + Palabra
+                </option>
+              </optgroup>
+
+              <optgroup label="Cifra por Transposición">
+                <option value="grupos">Grupos</option>
+                <option value="series">Series</option>
+                <option value="filas">Filas</option>
+                <option value="zigzag">Zig-Zag</option>
+                <option value="columnas">Columnas</option>
+              </optgroup>
+
+              <optgroup label="Cifra por Sustitución">
+                <option value="monoalfabetica">MonoAlfabética</option>
+                <option value="polialfabetica">
+                  Polialfabética (Vigenère)
+                </option>
+              </optgroup>
+
+              <optgroup label="Cifra por Sustitución Monogramica Polialfabeto">
+                <option value="periodicos">Polialfabética Periódica</option>
+                <option value="anagramacion">
+                  Anagramación Filas+Columnas
+                </option>
+                <option value="playfair">Playfair (5×5)</option>
+                <option value="hill">Hill</option>
+              </optgroup>
+
+              <optgroup label="Análisis">
+                <option value="kasiski">Ataque de Kasiski</option>
+              </optgroup>
+            </select>
+          </label>
+
+          <!-- campos dinámicos -->
+          <label id="campoClave"
+            >Clave alfabética:
+            <input type="text" name="clave" />
+          </label>
+
+          <label id="campoNumClave"
+            >Clave numérica:
+            <input type="text" name="num_clave" pattern="[0-9]+" />
+          </label>
+
+          <label id="campoMatriz"
+            >Matriz Hill:
+            <textarea name="matriz"></textarea>
+          </label>
+
+          <label id="campoTamGrupo"
+            >Tamaño de grupo:
+            <input type="number" name="tam_grupo" min="2" />
+          </label>
+
+          <label id="campoOrden"
+            >Orden numérico:
+            <input type="text" name="orden" pattern="[1-9]+" />
+          </label>
+
+          <label id="campoOrdenCol"
+            >Clave columnas:
+            <input type="text" name="orden_col" pattern="[1-9]+" />
+          </label>
+
+          <label id="campoOrdenFil"
+            >Clave filas:
+            <input type="text" name="orden_fil" pattern="[1-9]+" />
+          </label>
+
+          <label id="campoFilas"
+            >Número de filas:
+            <input type="number" name="filas" min="2" />
+          </label>
+
+          <label id="campoRieles"
+            >Número de rieles:
+            <input type="number" name="rieles" min="2" />
+          </label>
+
+          <label id="campoAccion"
+            >Acción:
+            <select name="accion">
+              <option value="cifrar">Cifrar</option>
+              <option value="descifrar">Descifrar</option>
+            </select> </label
+          ><br />
+
+          <button type="submit">Procesar / Analizar</button>
+        </form>
+
+        <h3>Resultado:</h3>
+        <pre id="resultado"></pre>
+      </div>
+    </div>
+
+    <script src="form.js"></script>
+    <script src="app.js"></script>
+    <script src="cavas.js"></script>
+  </body>
+</html>
