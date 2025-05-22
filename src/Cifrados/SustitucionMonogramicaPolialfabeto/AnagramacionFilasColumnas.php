@@ -10,12 +10,26 @@ final class AnagramacionFilasColumnas
     private const PAD = 'X';
 
     /* --------------- API --------------- */
+    /**
+     * Cifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a cifrar.
+     * @param array  $k   Clave de transposición (permutación de 1..n).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, array $k): string
     {
         [$pc, $pf] = $this->parseKeys($k);          // columnas, filas
         return $this->processBlocks($txt, $pc, $pf, true);
     }
 
+    /**
+     * Descifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a descifrar.
+     * @param array  $k   Clave de transposición (permutación de 1..n).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, array $k): string
     {
         [$pc, $pf] = $this->parseKeys($k);
@@ -24,6 +38,15 @@ final class AnagramacionFilasColumnas
     }
 
     /* -------- procesa cada bloque m×n -------- */
+    /**
+     * Procesa el texto cifrado o descifrado.
+     *
+     * @param string $txt Texto a procesar.
+     * @param array  $pc  Clave de columnas (permutación de 1..n).
+     * @param array  $pf  Clave de filas (permutación de 1..m).
+     * @param bool   $enc true: cifrar, false: descifrar.
+     * @return string Texto procesado.
+     */
     private function processBlocks(string $txt, array $pc, array $pf, bool $enc): string
     {
         $n   = count($pc);                   // columnas
@@ -57,6 +80,16 @@ final class AnagramacionFilasColumnas
     }
 
     /* -------------- cifrar bloque -------------- */
+    /**
+     * Cifra un bloque de texto usando las claves de transposición.
+     *
+     * @param string $chunk Texto a cifrar.
+     * @param array  $pc    Clave de columnas (permutación de 1..n).
+     * @param array  $pf    Clave de filas (permutación de 1..m).
+     * @param int    $n     Número de columnas.
+     * @param int    $m     Número de filas.
+     * @return string Texto cifrado.
+     */
     private function encChunk(string $chunk, array $pc, array $pf, int $n, int $m): string
     {
         $chars = $this->mbStrSplit($chunk);
@@ -82,6 +115,16 @@ final class AnagramacionFilasColumnas
     }
 
     /* ------------- descifrar bloque ------------- */
+    /**
+     * Descifra un bloque de texto usando las claves de transposición.
+     *
+     * @param string $chunk Texto cifrado.
+     * @param array  $pc    Clave de columnas (permutación de 1..n).
+     * @param array  $pf    Clave de filas (permutación de 1..m).
+     * @param int    $n     Número de columnas.
+     * @param int    $m     Número de filas.
+     * @return string Texto descifrado.
+     */
     private function decChunk(string $chunk, array $pc, array $pf, int $n, int $m): string
     {
         $chars = $this->mbStrSplit($chunk);
@@ -107,6 +150,13 @@ final class AnagramacionFilasColumnas
     }
 
     /* ----------- claves y mapas ----------- */
+    /**
+     * Extrae y valida las claves de transposición.
+     *
+     * @param array $k Clave de transposición (permutación de 1..n).
+     * @return array Claves como arrays de enteros.
+     * @throws \InvalidArgumentException Si la clave no es válida.
+     */
     private function parseKeys(array $k): array
     {
         $pc = $this->parseKey($k['col'] ?? '');
@@ -114,6 +164,13 @@ final class AnagramacionFilasColumnas
         return [$pc, $pf];
     }
 
+    /**
+     * Valida la clave de transposición (permutación de 1..n).
+     *
+     * @param string $k Clave de transposición.
+     * @return array Clave como array de enteros.
+     * @throws \InvalidArgumentException Si la clave no es válida.
+     */
     private function parseKey(string $k): array
     {
         if (!preg_match('/^[1-9]+$/', $k)) {
@@ -133,6 +190,13 @@ final class AnagramacionFilasColumnas
     }
 
     /** destino → origen (rank ascendente) */
+    /** origen → destino (rank descendente) */
+    /**
+     * Crea un mapa de ordenación de la permutación.
+     *
+     * @param array $perm Permutación (array de enteros).
+     * @return array Mapa de ordenación (array asociativo).
+     */
     private function orderMap(array $perm): array
     {
         $map = [];
@@ -144,11 +208,25 @@ final class AnagramacionFilasColumnas
     }
 
     /* -------- helpers multibyte -------- */
+    /**
+     * Divide un string UTF-8 en un array de caracteres.
+     *
+     * @param string $s String a dividir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * Extrae una subcadena de un string UTF-8.
+     *
+     * @param string $s    String original.
+     * @param int    $start Posición inicial (0-based).
+     * @param int    $len  Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $len): string
     {
         return mb_substr($s, $start, $len, 'UTF-8');

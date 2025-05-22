@@ -2,11 +2,16 @@
 namespace App\Cifrados\SustitucionMonogramicaPolialfabeto;
 
 /**
- * Ataque de Kasiski: sugiere longitudes de clave para Vigenère
- * (UTF-8).
+ * Ataque de Kasiski: sugiere longitudes de clave para Vigenère (UTF-8).
  */
 final class AtaqueKasiski
 {
+    /**
+     * Analiza el texto cifrado y sugiere longitudes de clave.
+     *
+     * @param string $cipher Texto cifrado.
+     * @return string Texto analizado con longitudes de clave sugeridas.
+     */
     public function analizar(string $cipher): string
     {
         // 1. Normalizar: quitar todo salvo letras A-Z y Ñ, poner mayúsculas

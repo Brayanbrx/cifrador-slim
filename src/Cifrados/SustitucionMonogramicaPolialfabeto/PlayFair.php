@@ -17,12 +17,26 @@ final class PlayFair
     private array $pos  = [];   // letra → [row,col]
 
     /* ---------- API ---------- */
+    /**
+     * Cifra el texto usando la clave.
+     *
+     * @param string $txt   Texto a cifrar.
+     * @param string $clave Clave para construir la matriz.
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, string $clave): string
     {
         $this->buildMatrix($clave);
         return $this->process($txt, +1);
     }
 
+    /**
+     * Descifra el texto usando la clave.
+     *
+     * @param string $txt   Texto a descifrar.
+     * @param string $clave Clave para construir la matriz.
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, string $clave): string
     {
         $this->buildMatrix($clave);
@@ -31,6 +45,12 @@ final class PlayFair
     }
 
     /* ---------- construir la matriz ---------- */
+    /**
+     * Construye la matriz 5×5 a partir de la clave.
+     *
+     * @param string $key Clave para construir la matriz.
+     * @throws \InvalidArgumentException Si la clave no es válida.
+     */
     private function buildMatrix(string $key): void
     {
         if (!preg_match('/^[A-Za-zÑñ]+$/u', $key)) {
@@ -57,6 +77,12 @@ final class PlayFair
         }
     }
 
+    /**
+     * Elimina duplicados de la cadena.
+     *
+     * @param string $s Cadena de entrada.
+     * @return string Cadena sin duplicados.
+     */
     private function dedup(string $s): string
     {
         $out = '';
@@ -67,6 +93,13 @@ final class PlayFair
     }
 
     /* ---------- cifrar / descifrar ---------- */
+    /**
+     * Procesa el texto cifrado o descifrado.
+     *
+     * @param string $txt Texto a procesar.
+     * @param int    $dir 1: cifrar, -1: descifrar.
+     * @return string Texto procesado.
+     */
     private function process(string $txt, int $dir): string
     {
         // normalizar texto claro/cifrado
@@ -117,6 +150,14 @@ final class PlayFair
     }
 
     /* ---------- util multibyte ---------- */
+    /**
+     * Extrae una subcadena de longitud $len desde la posición $off.
+     *
+     * @param string $s    Cadena de origen.
+     * @param int    $off  Offset inicial.
+     * @param int    $len  Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);

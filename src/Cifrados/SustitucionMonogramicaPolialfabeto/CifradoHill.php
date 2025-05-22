@@ -14,12 +14,26 @@ final class CifradoHill
     private const PAD = 'X';
 
     /* ---------- API ---------- */
+    /**
+     * Cifra el texto usando la matriz.
+     *
+     * @param string $txt    Texto a cifrar.
+     * @param string $matStr Cadena de matriz (ej. "1,2,3;4,5,6;7,8,9").
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, string $matStr): string
     {
         [$mat, $n] = $this->parseMatrix($matStr);
         return $this->enc($txt, $mat, $n);
     }
 
+    /**
+     * Descifra el texto usando la matriz.
+     *
+     * @param string $txt    Texto a descifrar.
+     * @param string $matStr Cadena de matriz (ej. "1,2,3;4,5,6;7,8,9").
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, string $matStr): string
     {
         [$mat, $n] = $this->parseMatrix($matStr);
@@ -29,6 +43,14 @@ final class CifradoHill
     }
 
     /* ---------- núcleo ---------- */
+    /**
+     * Cifra o descifra el texto usando la matriz.
+     *
+     * @param string $txt Texto a cifrar o descifrar.
+     * @param array  $mat Matriz de cifrado (n × n).
+     * @param int    $n   Tamaño de la matriz (n × n).
+     * @return string Texto cifrado o descifrado.
+     */
     private function enc(string $txt, array $mat, int $n): string
     {
         // normalizar mensaje
@@ -68,6 +90,13 @@ final class CifradoHill
     }
 
     /* ---------- parsear y validar matriz ---------- */
+    /**
+     * Valida y parsea la cadena de matriz.
+     *
+     * @param string $s Cadena de matriz (ej. "1,2,3;4,5,6;7,8,9").
+     * @return array Matriz y tamaño de la matriz.
+     * @throws \InvalidArgumentException Si la matriz no es válida.
+     */
     private function parseMatrix(string $s): array
     {
         if (trim($s) === '') {
@@ -96,6 +125,13 @@ final class CifradoHill
     }
 
     /* ---------- determinante recursivo mod 27 (n ≤ 3 práctico) ---------- */
+    /**
+     * Calcula el determinante de una matriz cuadrada.
+     *
+     * @param array $m Matriz cuadrada.
+     * @param int   $n Tamaño de la matriz (n × n).
+     * @return int Determinante de la matriz.
+     */
     private function det(array $m, int $n): int
     {
         if ($n === 1) return $m[0][0] % self::MOD;
@@ -109,6 +145,15 @@ final class CifradoHill
         return ($det % self::MOD + self::MOD) % self::MOD;
     }
 
+    /**
+     * Calcula el menor de una matriz eliminando la fila y columna especificadas.
+     *
+     * @param array $m Matriz original.
+     * @param int   $row Fila a eliminar.
+     * @param int   $col Columna a eliminar.
+     * @param int   $n Tamaño de la matriz (n × n).
+     * @return array Matriz menor resultante.
+     */
     private function minor(array $m, int $row, int $col, int $n): array
     {
         $minor = [];
@@ -125,6 +170,14 @@ final class CifradoHill
     }
 
     /* ---------- inversa mod 27 ---------- */
+    /**
+     * Calcula la matriz inversa de una matriz cuadrada.
+     *
+     * @param array $m Matriz a invertir.
+     * @param int   $n Tamaño de la matriz (n × n).
+     * @return array Matriz inversa.
+     * @throws \InvalidArgumentException Si el determinante no es invertible.
+     */
     private function inverseMatrix(array $m, int $n): array
     {
         $det    = $this->det($m, $n);
@@ -153,6 +206,14 @@ final class CifradoHill
     }
 
     /* ---------- arithmetic util ---------- */
+    /**
+     * Calcula el inverso multiplicativo de un número módulo m.
+     *
+     * @param int $a Número a invertir.
+     * @param int $m Módulo.
+     * @return int Inverso multiplicativo de a módulo m.
+     * @throws \InvalidArgumentException Si el determinante no es invertible.
+     */
     private function modInv(int $a, int $m): int
     {
         [$g, $x] = $this->egcd($a, $m);
@@ -162,6 +223,14 @@ final class CifradoHill
         return ($x % $m + $m) % $m;
     }
 
+    /* ---------- extended gcd ---------- */
+    /**
+     * Calcula el máximo común divisor (gcd) y los coeficientes de Bézout.
+     *
+     * @param int $a Primer número.
+     * @param int $b Segundo número.
+     * @return array Array con el gcd y los coeficientes de Bézout.
+     */
     private function egcd(int $a, int $b): array
     {
         if ($b === 0) return [$a, 1, 0];
@@ -169,12 +238,26 @@ final class CifradoHill
         return [$g, $y1, $x1 - intdiv($a, $b) * $y1];
     }
 
+    /* ---------- gcd util ---------- */
+    /**
+     * Calcula el máximo común divisor (gcd) de dos números enteros.
+     *
+     * @param int $a Primer número.
+     * @param int $b Segundo número.
+     * @return int Máximo común divisor.
+     */
     private function gcd(int $a, int $b): int
     {
         return $b === 0 ? abs($a) : $this->gcd($b, $a % $b);
     }
 
     /* ---------- multibyte helper ---------- */
+    /**
+     * Convierte una cadena a un array de caracteres multibyte.
+     *
+     * @param string $s Cadena a convertir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);

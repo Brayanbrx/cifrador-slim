@@ -10,7 +10,12 @@ final class ZigZag
 {
     private const PAD = 'X';
 
-    /* ------------- CIFRAR ------------- */
+    /* ------------- API ------------- */
+    /** Cifra el texto usando la clave de transposición.
+     * @param string $txt Texto a cifrar.
+     * @param int    $r   Número de rieles (≥ 2).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, int $r): string
     {
         if ($r < 2) {
@@ -42,7 +47,11 @@ final class ZigZag
         return $out;
     }
 
-    /* ------------- DESCIFRAR ------------- */
+    /** Descifra el texto usando la clave de transposición.
+     * @param string $txt Texto a descifrar.
+     * @param int    $r   Número de rieles (≥ 2).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, int $r): string
     {
         if ($r < 2) {
@@ -78,7 +87,12 @@ final class ZigZag
         return $out;
     }
 
-    /* devuelve la fila (0-based) para la posición i */
+    /* ---------- helpers de cifrado ---------- */
+    /** Devuelve el índice de la fila en la que cae el carácter i
+     * @param int $i Índice del carácter (0-based).
+     * @param int $r Número de rieles.
+     * @return int Índice de la fila (0-based).
+     */
     private function rowAt(int $i, int $r): int
     {
         $cycle = 2 * ($r - 1);
@@ -87,14 +101,21 @@ final class ZigZag
     }
 
     /* ---------- helpers multibyte ---------- */
-
-    /** Divide string UTF-8 en array de caracteres */
+    /** Divide string UTF-8 en array de caracteres
+     * @param string $s Cadena a dividir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
-    /** mb_substr ‘safe’ que admite longitud multibyte */
+    /** Extrae una subcadena de string UTF-8
+     * @param string $s      Cadena a extraer.
+     * @param int    $start  Posición inicial (0-based).
+     * @param int    $length Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $length): string
     {
         return mb_substr($s, $start, $length, 'UTF-8');

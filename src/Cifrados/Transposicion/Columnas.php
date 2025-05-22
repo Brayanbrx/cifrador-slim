@@ -48,6 +48,13 @@ final class Columnas
     }
 
     /* ---------- DESCIFRAR ---------- */
+    /**
+     * Descifra el texto usando la clave de transposición.
+     *
+     * @param string $txt   Texto a descifrar.
+     * @param string $orden Clave de transposición (permutación de 1..n).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, string $orden): string
     {
         $perm = $this->parseKey($orden);
@@ -76,6 +83,13 @@ final class Columnas
     }
 
     /* ---------- validación de clave ---------- */
+    /**
+     * Valida la clave de transposición (permutación de 1..n).
+     *
+     * @param string $orden Clave de transposición.
+     * @return array Clave como array de enteros.
+     * @throws \InvalidArgumentException Si la clave no es válida.
+     */
     private function parseKey(string $orden): array
     {
         if (!preg_match('/^[1-9]+$/', $orden)) {
@@ -94,11 +108,25 @@ final class Columnas
     }
 
     /* ---------- helpers multibyte ---------- */
+    /**
+     * Divide un string UTF-8 en un array de caracteres.
+     *
+     * @param string $s String a dividir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * Extrae una subcadena de un string UTF-8.
+     *
+     * @param string $s String original.
+     * @param int $start Posición inicial.
+     * @param int $length Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $length): string
     {
         return mb_substr($s, $start, $length, 'UTF-8');

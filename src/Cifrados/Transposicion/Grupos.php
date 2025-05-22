@@ -3,18 +3,31 @@ namespace App\Cifrados\Transposicion;
 
 /**
  * Transposición por grupos con inversión interna.
- * Requiere la extensión mbstring.
  */
 final class Grupos
 {
     private const PAD = 'X';
 
     /* ---------- API ---------- */
+    /**
+     * Cifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a cifrar.
+     * @param int    $g   Tamaño de grupo (≥ 2).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, int $g): string
     {
         return $this->procesar($txt, $g);
     }
 
+    /**
+     * Descifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a descifrar.
+     * @param int    $g   Tamaño de grupo (≥ 2).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, int $g): string
     {
         $out = $this->procesar($txt, $g);
@@ -22,6 +35,13 @@ final class Grupos
     }
 
     /* ---------- lógica común ---------- */
+    /**
+     * Procesa el texto cifrado o descifrado.
+     *
+     * @param string $txt Texto a procesar.
+     * @param int    $g   Tamaño de grupo (≥ 2).
+     * @return string Texto procesado.
+     */
     private function procesar(string $txt, int $g): string
     {
         if ($g < 2) {
@@ -50,11 +70,25 @@ final class Grupos
     }
 
     /* ---------- helpers multibyte ---------- */
+    /**
+     * Divide una cadena en un array de caracteres multibyte.
+     *
+     * @param string $s Cadena a dividir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * Extrae una subcadena de una cadena multibyte.
+     *
+     * @param string $s Cadena de origen.
+     * @param int    $start Posición inicial.
+     * @param int    $length Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $length): string
     {
         return mb_substr($s, $start, $length, 'UTF-8');

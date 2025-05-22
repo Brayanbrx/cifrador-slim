@@ -10,12 +10,26 @@ final class Series
     private const PAD = 'X';
 
     /* ------------------- API ------------------- */
+    /**
+     * Cifra el texto usando la clave de transposición.
+     *
+     * @param string $txt   Texto a cifrar.
+     * @param string $orden Clave de transposición (permutación de 1..n).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, string $orden): string
     {
         $perm = $this->parsePerm($orden);
         return $this->procesar($txt, $perm, false);
     }
 
+    /**
+     * Descifra el texto usando la clave de transposición.
+     *
+     * @param string $txt   Texto a descifrar.
+     * @param string $orden Clave de transposición (permutación de 1..n).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, string $orden): string
     {
         $perm = $this->parsePerm($orden);
@@ -23,8 +37,13 @@ final class Series
     }
 
     /* ------------- helpers ------------- */
-
-    /** Valida y transforma «3142» → [2,0,3,1] (0-based) */
+    /**
+     * Valida que orden sea correcto (permutación de 1..n).
+     *
+     * @param string $orden Clave de transposición (permutación de 1..n).
+     * @return array Permutación como array de enteros.
+     * @throws \InvalidArgumentException Si la clave no es válida.
+     */
     private function parsePerm(string $orden): array
     {
         if (!preg_match('/^[1-9]+$/', $orden)) {
@@ -47,8 +66,14 @@ final class Series
         return $perm;
     }
 
+    /* ---------- lógica común ---------- */
     /**
-     * $inverse = true aplica la permutación inversa (descifrado)
+     * Procesa el texto cifrado o descifrado.
+     *
+     * @param string $txt    Texto a procesar.
+     * @param array  $perm   Permutación (array de enteros).
+     * @param bool   $inverse Si es verdadero, invierte la permutación.
+     * @return string Texto procesado.
      */
     private function procesar(string $txt, array $perm, bool $inverse): string
     {
@@ -89,11 +114,25 @@ final class Series
     }
 
     /* ---------- util multibyte ---------- */
+    /**
+     * Convierte una cadena en un array de caracteres multibyte.
+     *
+     * @param string $s Cadena a convertir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * Extrae una subcadena de una cadena multibyte.
+     *
+     * @param string $s      Cadena a extraer.
+     * @param int    $start  Posición inicial (0-based).
+     * @param int    $length Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $length): string
     {
         return mb_substr($s, $start, $length, 'UTF-8');

@@ -3,20 +3,19 @@ namespace App\Cifrados\Transposicion;
 
 /**
  * Transposición por Filas (UTF-8).
- *
- * Cifrar:
- *   • Se escribe top-down en r filas.
- *   • Se lee left-right.
- *
- * Descifrar:
- *   • Reconstruye las filas según longitudes,
- *     luego lee column-major para recuperar el claro.
  */
 final class Filas
 {
     private const PAD = 'X';
 
-    /* ---------- CIFRAR ---------- */
+    /* ---------- API ---------- */
+    /**
+     * Cifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a cifrar.
+     * @param int    $r   Número de filas (≥ 2).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, int $r): string
     {
         if ($r < 2) {
@@ -50,7 +49,13 @@ final class Filas
         return $out;
     }
 
-    /* ---------- DESCIFRAR ---------- */
+    /**
+     * Descifra el texto usando la clave de transposición.
+     *
+     * @param string $txt Texto a descifrar.
+     * @param int    $r   Número de filas (≥ 2).
+     * @return string Texto descifrado.
+     */
     public function descifrar(string $txt, int $r): string
     {
         if ($r < 2) {
@@ -87,11 +92,25 @@ final class Filas
     }
 
     /* ---------- helpers multibyte ---------- */
+    /**
+     * Convierte una cadena a un array de caracteres multibyte.
+     *
+     * @param string $s Cadena a convertir.
+     * @return array Array de caracteres.
+     */
     private function mbStrSplit(string $s): array
     {
         return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * Devuelve una subcadena de longitud multibyte.
+     *
+     * @param string $s Cadena original.
+     * @param int    $start Posición inicial.
+     * @param int    $length Longitud de la subcadena.
+     * @return string Subcadena extraída.
+     */
     private function mbSubstr(string $s, int $start, int $length): string
     {
         return mb_substr($s, $start, $length, 'UTF-8');
