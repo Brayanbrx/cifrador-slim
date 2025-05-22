@@ -2,37 +2,65 @@
 namespace App\Cifrados\SustitucionMonogramicaPolialfabeto;
 
 /**
- * Polialfabética Periódica con clave NUMÉRICA (cada dígito = desplazamiento).
- *  Ej. clave 3142  =>  desplaza 3,1,4,2 y repite.
+ * Polialfabética Periódica con clave NUMÉRICA (cada dígito = desplazamiento),
+ * Alfabeto de 27 letras; módulo 27.
+ *
+ *  Ej. clave 3142  →  desplaza 3,1,4,2 y repite.
  */
 final class PolialfabeticosPeriodicos
 {
-    private const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    /** Alfabeto español A-Z + Ñ */
+    private const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
 
-    public function cifrar(string $txt,string $numKey):string
-    { $seq=$this->parseKey($numKey); return $this->process($txt,$seq,+1); }
-
-    public function descifrar(string $txt,string $numKey):string
-    { $seq=$this->parseKey($numKey); return $this->process($txt,$seq,-1); }
-
-    /* ------ helpers ------ */
-    private function parseKey(string $key):array
+    /* ---------- API ---------- */
+    public function cifrar(string $txt, string $numKey): string
     {
-        if(!preg_match('/^[0-9]+$/',$key) || strpos($key,'0')!==false)
-            throw new \InvalidArgumentException('Clave numérica debe ser dígitos 1-9');
-        return array_map('intval',str_split($key)); // ej [3,1,4,2]
+        $seq = $this->parseKey($numKey);
+        return $this->process($txt, $seq, +1);
     }
 
-    private function process(string $txt,array $seq,int $sign):string
+    public function descifrar(string $txt, string $numKey): string
     {
-        $abc=self::ABC; $clean=strtoupper(preg_replace('/[^A-Z]/','',$txt));
-        $out=''; $lenSeq=count($seq);
-        foreach(str_split($clean) as $i=>$ch){
-            $m=strpos($abc,$ch);
-            $k=$seq[$i%$lenSeq];
-            $c=($m+$sign*$k+26)%26;
-            $out.=$abc[$c];
+        $seq = $this->parseKey($numKey);
+        return $this->process($txt, $seq, -1);
+    }
+
+    /* ---------- helpers ---------- */
+    private function parseKey(string $key): array
+    {
+        if (!preg_match('/^[1-9]+$/', $key)) {
+            throw new \InvalidArgumentException('Clave numérica: solo dígitos 1-9, sin ceros');
+        }
+        return array_map('intval', str_split($key));   // ej. "3142" → [3,1,4,2]
+    }
+
+    private function process(string $txt, array $seq, int $sign): string
+    {
+        $abcArr = $this->mbStrSplit(self::ABC);
+        $abcMap = array_flip($abcArr);                 // letra → índice
+
+        $cleanArr = $this->mbStrSplit(
+            mb_strtoupper(
+                preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
+                'UTF-8'
+            )
+        );
+
+        $lenSeq = count($seq);
+        $out = '';
+
+        foreach ($cleanArr as $i => $ch) {
+            $m = $abcMap[$ch]        ?? 0;
+            $k = $seq[$i % $lenSeq];                // desplazamiento numérico
+            $c = ($m + $sign * $k + 27) % 27;       // módulo 27
+            $out .= $abcArr[$c];
         }
         return $out;
+    }
+
+    /* --- dividir string UTF-8 en array de caracteres --- */
+    private function mbStrSplit(string $s): array
+    {
+        return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 }

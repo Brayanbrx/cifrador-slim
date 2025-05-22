@@ -2,14 +2,17 @@
 namespace App\Cifrados\Desplazamiento;
 
 /**
- * Implementa el cifrado “puro con palabra clave”.
- *  Cifrar :  C[i] = (M[i] + K[i]) mod 26
- *  Descifrar: M[i] = (C[i] − K[i]) mod 26
+ * “Puro con palabra clave” (Vigenère) para alfabeto español (A-Z + Ñ).
+ *
+ *  Cifrado   : Cᵢ = (Mᵢ + Kᵢ) mod 27
+ *  Descifrado: Mᵢ = (Cᵢ − Kᵢ) mod 27
  */
 final class PuroConPalabraClave
 {
-    private const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    /** Alfabeto de 27 símbolos — Ñ después de N */
+    private const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
 
+    /* ---------- API ---------- */
     public function cifrar(string $txt, string $clave): string
     {
         $this->validar($clave);
@@ -22,29 +25,46 @@ final class PuroConPalabraClave
         return $this->procesar($txt, $clave, -1);
     }
 
-    /* ----------------- helpers ------------------ */
-
+    /* ---------- núcleo ---------- */
     private function procesar(string $txt, string $clave, int $signo): string
     {
-        $abc  = self::ABC;
-        $text = strtoupper(preg_replace('/[^A-Z]/', '', $txt));
-        $key  = strtoupper($clave);
-        $out  = '';
+        // Normalizar texto y clave
+        $abcArr = $this->mbStrSplit(self::ABC);      // array de 27 letras
+        $abcMap = array_flip($abcArr);               // letra → índice
 
-        $kLen = strlen($key);
-        for ($i=0, $n=strlen($text); $i<$n; $i++) {
-            $m = strpos($abc, $text[$i]);          // valor mensaje
-            $k = strpos($abc, $key[$i % $kLen]);   // valor clave
-            $c = ($m + $signo*$k + 26) % 26;       // +26 evita negativos
-            $out .= $abc[$c];
+        $msgArr = $this->mbStrSplit(
+            mb_strtoupper(
+                preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
+                'UTF-8'
+            )
+        );
+
+        $keyArr = $this->mbStrSplit(mb_strtoupper($clave, 'UTF-8'));
+        $kLen   = count($keyArr);
+
+        $out = '';
+        foreach ($msgArr as $i => $ch) {
+            $m = $abcMap[$ch]              ?? 0;
+            $k = $abcMap[$keyArr[$i % $kLen]] ?? 0;
+            $c = ($m + $signo * $k + 27) % 27;
+            $out .= $abcArr[$c];
         }
         return $out;
     }
 
+    /* ---------- validación ---------- */
     private function validar(string $clave): void
     {
-        if (!preg_match('/^[A-Za-z]+$/', $clave)) {
-            throw new \InvalidArgumentException('La clave solo puede contener letras A-Z');
+        if (!preg_match('/^[A-Za-zÑñ]+$/u', $clave)) {
+            throw new \InvalidArgumentException(
+                'La clave solo puede contener letras A-Z y Ñ'
+            );
         }
+    }
+
+    /* ---------- helpers multibyte ---------- */
+    private function mbStrSplit(string $s): array
+    {
+        return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 }

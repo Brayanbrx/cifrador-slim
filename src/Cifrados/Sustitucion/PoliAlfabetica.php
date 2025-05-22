@@ -2,37 +2,64 @@
 namespace App\Cifrados\Sustitucion;
 
 /**
- * Polialfabética (Vigenère clásico).
+ * Polialfabética (Vigenère) con alfabeto español A-Z.
  */
 final class Polialfabetica
 {
-    private const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    /** Alfabeto de 27 símbolos*/
+    private const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
 
-    public function cifrar(string $txt,string $clave):string
-    { $this->validar($clave); return $this->procesar($txt,$clave,+1); }
+    /* ---------------- API pública ---------------- */
 
-    public function descifrar(string $txt,string $clave):string
-    { $this->validar($clave); return $this->procesar($txt,$clave,-1); }
-
-    /* ---------- helpers ---------- */
-    private function validar(string $k):void
+    public function cifrar(string $txt, string $clave): string
     {
-        if(!preg_match('/^[A-Za-z]+$/',$k))
-            throw new \InvalidArgumentException('Clave solo letras A-Z');
+        $this->validar($clave);
+        return $this->procesar($txt, $clave, +1);
     }
 
-    private function procesar(string $txt,string $clave,int $signo):string
+    public function descifrar(string $txt, string $clave): string
     {
-        $abc=self::ABC;
-        $msg=strtoupper(preg_replace('/[^A-Z]/','',$txt));
-        $key=strtoupper($clave); $klen=strlen($key); $out='';
+        $this->validar($clave);
+        return $this->procesar($txt, $clave, -1);
+    }
 
-        for($i=0,$n=strlen($msg);$i<$n;$i++){
-            $m=strpos($abc,$msg[$i]);
-            $k=strpos($abc,$key[$i%$klen]);
-            $c=($m+$signo*$k+26)%26;
-            $out.=$abc[$c];
+    /* ---------------- helpers ---------------- */
+
+    private function validar(string $k): void
+    {
+        if (!preg_match('/^[A-Za-zÑñ]+$/u', $k)) {
+            throw new \InvalidArgumentException('La clave solo puede contener letras A-Z y Ñ');
+        }
+    }
+
+    private function procesar(string $txt, string $clave, int $signo): string
+    {
+        $abcArr = $this->mbStrSplit(self::ABC);              // array de 27 letras
+        $abcMap = array_flip($abcArr);                       // letra → índice
+
+        $msgArr = $this->mbStrSplit(
+            mb_strtoupper(
+                preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
+                'UTF-8'
+            )
+        );
+
+        $keyArr = $this->mbStrSplit(mb_strtoupper($clave, 'UTF-8'));
+        $klen   = count($keyArr);
+
+        $out = '';
+        foreach ($msgArr as $i => $ch) {
+            $m = $abcMap[$ch]        ?? 0;
+            $k = $abcMap[$keyArr[$i % $klen]] ?? 0;
+            $c = ($m + $signo * $k + 27) % 27;
+            $out .= $abcArr[$c];
         }
         return $out;
+    }
+
+    /** divide cadena UTF-8 en array de caracteres */
+    private function mbStrSplit(string $s): array
+    {
+        return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 }

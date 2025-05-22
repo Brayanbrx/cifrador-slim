@@ -2,55 +2,78 @@
 namespace App\Cifrados\Transposicion;
 
 /**
- * Transposición por Filas
- * - Cifrar: se escribe por columnas (top-down) en una matriz r×c
- *           y se lee por filas (left-right).
- * - Descifrar: proceso inverso.
+ * Transposición por Filas (UTF-8).
+ *
+ * Cifrar:
+ *   • Se escribe top-down en r filas.
+ *   • Se lee left-right.
+ *
+ * Descifrar:
+ *   • Reconstruye las filas según longitudes,
+ *     luego lee column-major para recuperar el claro.
  */
 final class Filas
 {
     private const PAD = 'X';
 
+    /* ---------- CIFRAR ---------- */
     public function cifrar(string $txt, int $r): string
     {
-        if ($r < 2) throw new \InvalidArgumentException('Filas debe ser ≥ 2');
+        if ($r < 2) {
+            throw new \InvalidArgumentException('Filas debe ser ≥ 2');
+        }
 
-        $clean = strtoupper(preg_replace('/[^A-Z]/', '', $txt));
-        $len   = strlen($clean);
+        // Normalizar: A-Z + Ñ, a mayúsculas
+        $clean = mb_strtoupper(
+            preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
+            'UTF-8'
+        );
 
-        /* calc columnas y relleno */
-        $c     = (int)ceil($len / $r);
-        $pad   = $r * $c - $len;
+        $len = mb_strlen($clean, 'UTF-8');
+        $c   = (int)ceil($len / $r);          // nº de columnas
+        $pad = $r * $c - $len;                // relleno necesario
         if ($pad) $clean .= str_repeat(self::PAD, $pad);
 
-        /* escribir column-major & leer row-major */
-        $rows = array_fill(0, $r, '');
-        for ($i = 0; $i < strlen($clean); $i++) {
+        // Escribe column-major
+        $rows = array_fill(0, $r, []);
+        $chars = $this->mbStrSplit($clean);
+        foreach ($chars as $i => $ch) {
             $row = $i % $r;
-            $rows[$row] .= $clean[$i];
+            $rows[$row][] = $ch;
         }
-        return implode('', $rows);
+
+        // Lee row-major
+        $out = '';
+        foreach ($rows as $rowArr) {
+            $out .= implode('', $rowArr);
+        }
+        return $out;
     }
 
+    /* ---------- DESCIFRAR ---------- */
     public function descifrar(string $txt, int $r): string
     {
-        if ($r < 2) throw new \InvalidArgumentException('Filas debe ser ≥ 2');
+        if ($r < 2) {
+            throw new \InvalidArgumentException('Filas debe ser ≥ 2');
+        }
 
-        $len = strlen($txt);
-        $c   = (int)ceil($len / $r);
-        $q   = intdiv($len, $r);     // columnas completas
-        $rem = $len % $r;            // filas con un char extra
+        $len = mb_strlen($txt, 'UTF-8');
+        $c   = (int)ceil($len / $r);          // estimado de columnas
 
-        /* reconstruir filas */
+        $q   = intdiv($len, $r);              // columnas completas
+        $rem = $len % $r;                     // primeras $rem filas tienen +1 char
+
+        // Cortar texto en filas según longitud calculada
         $rows = [];
         $pos  = 0;
         for ($i = 0; $i < $r; $i++) {
-            $lenRow   = $q + (($i < $rem) ? 1 : 0);
-            $rows[$i] = substr($txt, $pos, $lenRow);
+            $lenRow = $q + (($i < $rem) ? 1 : 0);
+            $rows[$i] = $this->mbSubstr($txt, $pos, $lenRow);
+            $rows[$i] = $this->mbStrSplit($rows[$i]);      // array de chars
             $pos     += $lenRow;
         }
 
-        /* leer column-major para obtener texto original */
+        // Leer column-mayor para reconstruir texto original
         $out = '';
         for ($col = 0; $col < $c; $col++) {
             for ($row = 0; $row < $r; $row++) {
@@ -59,6 +82,18 @@ final class Filas
                 }
             }
         }
-        return rtrim($out, self::PAD); // quita relleno
+        // Eliminar relleno X al final
+        return rtrim($out, self::PAD);
+    }
+
+    /* ---------- helpers multibyte ---------- */
+    private function mbStrSplit(string $s): array
+    {
+        return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
+    }
+
+    private function mbSubstr(string $s, int $start, int $length): string
+    {
+        return mb_substr($s, $start, $length, 'UTF-8');
     }
 }

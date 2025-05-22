@@ -2,91 +2,123 @@
 namespace App\Cifrados\SustitucionMonogramicaPolialfabeto;
 
 /**
- * Cifrado Playfair (5×5, I=J, relleno X).
+ * PlayFair 5×5 para el alfabeto español:
+ *   • I y J se fusionan.
+ *   • Ñ se conserva.
+ *   • K se omite para cuadrar 25 casillas.
+ *   Relleno X cuando hay duplicado o longitud impar.
  */
 final class PlayFair
 {
-    private array $mat;     // matriz 5x5
-    private array $pos;     // letra → [row,col]
+    private const ABC  = 'ABCDEFGHILMNÑOPQRSTUVWXYZ'; // sin J (↔I) y sin K
+    private const PAD  = 'X';
 
-    /* --- API --- */
-    public function cifrar(string $txt,string $clave):string
+    private array $mat  = [];   // matriz 5×5
+    private array $pos  = [];   // letra → [row,col]
+
+    /* ---------- API ---------- */
+    public function cifrar(string $txt, string $clave): string
     {
         $this->buildMatrix($clave);
-        return $this->process($txt,+1);
+        return $this->process($txt, +1);
     }
-    public function descifrar(string $txt,string $clave):string
+
+    public function descifrar(string $txt, string $clave): string
     {
         $this->buildMatrix($clave);
-        return $this->process($txt,-1);
+        $res = $this->process($txt, -1);
+        return rtrim($res, self::PAD);              // quita X de relleno final
     }
 
-    /* --- construir matriz 5×5 --- */
-    private function buildMatrix(string $key):void
+    /* ---------- construir la matriz ---------- */
+    private function buildMatrix(string $key): void
     {
-        if(!preg_match('/^[A-Za-z]+$/',$key))
-            throw new \InvalidArgumentException('Clave solo letras');
+        if (!preg_match('/^[A-Za-zÑñ]+$/u', $key)) {
+            throw new \InvalidArgumentException('Clave solo puede contener letras A-Z y Ñ');
+        }
 
-        $key=strtoupper(str_replace('J','I',$key));
-        $abc='ABCDEFGHIKLMNOPQRSTUVWXYZ';          // sin J
-        $seq=$this->dedup($key).$abc;
-        $seq=$this->dedup($seq);
+        // normalizar clave: mayúsculas, I/J fusionadas, quitar K
+        $key = mb_strtoupper($key, 'UTF-8');
+        $key = str_replace(['J', 'K'], ['I', ''], $key);
 
-        $this->mat=$this->pos=[];
-        $i=0;
-        foreach(str_split($seq) as $ch){
-            $r=intdiv($i,5); $c=$i%5;
-            $this->mat[$r][$c]=$ch;
-            $this->pos[$ch]=[$r,$c];
-            $i++;
-            if($i===25)break;
+        // cadena semilla = clave sin duplicados + alfabeto base
+        $seed = $this->dedup($key) . self::ABC;
+        $seed = $this->dedup($seed);                // asegurar sin repes
+
+        // llenar matriz y mapa de posiciones
+        $this->mat = $this->pos = [];
+        $chars = $this->mbStrSplit($seed);
+        for ($i = 0; $i < 25; $i++) {
+            $r = intdiv($i, 5);
+            $c =  $i % 5;
+            $ch = $chars[$i];
+            $this->mat[$r][$c] = $ch;
+            $this->pos[$ch]    = [$r, $c];
         }
     }
-    private function dedup(string $s):string
+
+    private function dedup(string $s): string
     {
-        $out='';
-        foreach(str_split($s) as $ch) if(!str_contains($out,$ch)) $out.=$ch;
+        $out = '';
+        foreach ($this->mbStrSplit($s) as $ch) {
+            if (!str_contains($out, $ch)) $out .= $ch;
+        }
         return $out;
     }
 
-    /* --- cifrar / descifrar texto --- */
-    private function process(string $txt,int $dir):string
+    /* ---------- cifrar / descifrar ---------- */
+    private function process(string $txt, int $dir): string
     {
-        $clean=strtoupper(preg_replace('/[^A-Z]/','',$txt));
-        $clean=str_replace('J','I',$clean);
+        // normalizar texto claro/cifrado
+        $clean = mb_strtoupper(
+            preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
+            'UTF-8'
+        );
+        $clean = str_replace(['J', 'K'], ['I', ''], $clean);
 
-        /* formar dígrafos */
-        $pairs=[];
-        $i=0; $n=strlen($clean);
-        while($i<$n){
-            $a=$clean[$i];
-            $b=($i+1<$n)? $clean[$i+1]:'X';
-            if($a===$b){ $b='X'; $i++; }
-            else{ $i+=2; }
-            $pairs[]=$a.$b;
-        }
-        if(strlen(end($pairs))===1) $pairs[count($pairs)-1].='X';
+        // formar dígrafos
+        $pairs = [];
+        $chars = $this->mbStrSplit($clean);
+        for ($i = 0, $n = count($chars); $i < $n; ) {
+            $a = $chars[$i];
+            $b = ($i + 1 < $n) ? $chars[$i + 1] : self::PAD;
 
-        $out='';
-        foreach($pairs as $p){
-            [$a,$b]=str_split($p);
-            [$ra,$ca]=$this->pos[$a];
-            [$rb,$cb]=$this->pos[$b];
-
-            if($ra===$rb){                // misma fila
-                $ca=($ca+$dir+5)%5;
-                $cb=($cb+$dir+5)%5;
-            }elseif($ca===$cb){           // misma columna
-                $ra=($ra+$dir+5)%5;
-                $rb=($rb+$dir+5)%5;
-            }else{                        // rectángulo
-                [$ca,$cb]=[$cb,$ca];
+            if ($a === $b) {        // par duplicado → inserta X
+                $b = self::PAD;
+                $i += 1;
+            } else {
+                $i += 2;
             }
-            $out.=$this->mat[$ra][$ca].$this->mat[$rb][$cb];
+            $pairs[] = [$a, $b];
         }
-        if ($dir === -1) {                 // estamos descifrando
-    $out = preg_replace('/X$/', '', $out);   // quita X final única
-}
+        if (count(end($pairs)) === 1) {              // longitud impar total
+            $pairs[count($pairs) - 1][] = self::PAD;
+        }
+
+        // procesar cada par
+        $out = '';
+        foreach ($pairs as [$a, $b]) {
+            [$ra, $ca] = $this->pos[$a];
+            [$rb, $cb] = $this->pos[$b];
+
+            if ($ra === $rb) {                       // misma fila
+                $ca = ($ca + $dir + 5) % 5;
+                $cb = ($cb + $dir + 5) % 5;
+            } elseif ($ca === $cb) {                 // misma columna
+                $ra = ($ra + $dir + 5) % 5;
+                $rb = ($rb + $dir + 5) % 5;
+            } else {                                // rectángulo
+                [$ca, $cb] = [$cb, $ca];
+            }
+            $out .= $this->mat[$ra][$ca] . $this->mat[$rb][$cb];
+        }
+
         return $out;
+    }
+
+    /* ---------- util multibyte ---------- */
+    private function mbStrSplit(string $s): array
+    {
+        return preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY);
     }
 }
