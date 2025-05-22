@@ -4,31 +4,31 @@ namespace App\Cifrados\Transposicion;
 /**
  * Transposición por Columnas (permuta las columnas según clave numérica),
  * (alfabeto español de 27 símbolos).
- *
- * • Cifrado: se escribe row-mayor y se lee columna por columna en el orden
- *   ascendente de la clave (dígito 1 → 2 → … n).
- * • Descifrado: reconstruye las columnas según la clave y lee row-mayor.
  */
 final class Columnas
 {
-    private const PAD = 'X';
+    private const PAD = 'X'; // Caracter de relleno
 
-    /* ---------- CIFRAR ---------- */
+    /* ---------- API ---------- */
+    /**
+     * Cifra el texto usando la clave de transposición.
+     *
+     * @param string $txt   Texto a cifrar.
+     * @param string $orden Clave de transposición (permutación de 1..n).
+     * @return string Texto cifrado.
+     */
     public function cifrar(string $txt, string $orden): string
     {
-        $perm = $this->parseKey($orden);      // [col => rank]
-        $n    = count($perm);
+        $perm = $this->parseKey($orden);      // valida que orden sea correcto 1..n y devuelve array
+        $n    = count($perm);                 // número de columnas   
 
-        // Normalizar: quitar todo salvo A-Z / Ñ, y pasar a mayúsculas
-        $clean = mb_strtoupper(
-            preg_replace('/[^A-Za-zÑñ]/u', '', $txt),
-            'UTF-8'
-        );
+        // Normalizar: A-Z + Ñ, a mayúsculas
+        $clean = mb_strtoupper(preg_replace('/[^A-Za-zÑñ]/u', '', $txt), 'UTF-8');
 
         // Relleno para múltiplo de n
-        $len = mb_strlen($clean, 'UTF-8');
-        $pad = ($n - ($len % $n)) % $n;
-        if ($pad) $clean .= str_repeat(self::PAD, $pad);
+        $len = mb_strlen($clean, 'UTF-8');                  // longitud del texto limpio
+        $pad = ($n - ($len % $n)) % $n;                     // relleno necesario
+        if ($pad) $clean .= str_repeat(self::PAD, $pad);    // relleno con X
 
         // Dividir en filas de n caracteres
         $rows = [];
